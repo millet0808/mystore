@@ -16,6 +16,9 @@ class ProductList(generic.ListView):
     model = Product
 
 
+class ProductDetail(generic.DetailView):
+    model = Product
+
 # @permission_required('estore.add_product')
 # def product_create(request):
 #     if request.method == "POST":
