@@ -29,7 +29,7 @@ class ProductList(generic.ListView):
 class ProductCreate(PermissionRequiredMixin, generic.CreateView):
     permission_required = 'estore.add_product'
     model = Product
-    fields = ('title', 'description', 'quantity', 'price')
+    fields = ('title', 'description', 'quantity', 'price', 'image')
 
     def get_success_url(self):
         messages.success(self.request, '產品已新增')
@@ -49,7 +49,7 @@ class ProductCreate(PermissionRequiredMixin, generic.CreateView):
 class ProductUpdate(PermissionRequiredMixin, generic.UpdateView):
     permission_required = 'estore.change_product'
     model = Product
-    fields = ('title', 'description', 'quantity', 'price')
+    fields = ('title', 'description', 'quantity', 'price', 'image')
 
     def get_success_url(self):
         messages.success(self.request, '產品已變更')
