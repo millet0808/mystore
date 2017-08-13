@@ -26,6 +26,16 @@ class OrderDetailMixin(object):
         return get_object_or_404(self.request.user.order_set, token=uuid.UUID(self.kwargs.get('token')))
 
 
+class OrderList(PermissionRequiredMixin, generic.ListView):
+    model = Order
+
+    def has_permission(self):
+        if self.permission_required:
+            return super(OrderList, self).has_permission()
+        else:
+            return True
+
+
 class OrderDetail(OrderDetailMixin, LoginRequiredMixin, generic.DetailView):
     pass
 
@@ -39,7 +49,7 @@ class OrderPayWithCreditCard(OrderDetailMixin, LoginRequiredMixin, generic.Detai
         self.object.make_payment()
         self.object.save()
 
-        return redirect('order_detail', token=self.object.token)
+        return redirect('order_list')
 
 
 class OrderCreateCartCheckout(LoginRequiredMixin, generic.CreateView):
