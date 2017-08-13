@@ -9,13 +9,16 @@ from django.urls import reverse
 from django.views import generic
 
 from .forms import OrderInfoForm
-from .models import Order, Product
+from .models import Order, Product, CartItem
 
 
 # Create your views here.
-class CartDetailFromRequest(generic.DetailView):
-    def get_object(self):
-        return self.request.cart
+class CartDetailFromRequest(generic.ListView):
+    template_name = 'estore/cart_detail.html'
+
+    def get_queryset(self):
+        cart_items = CartItem.objects.filter(cart=self.request.cart)
+        return cart_items
 
 
 class OrderDetailMixin(object):
@@ -87,7 +90,7 @@ class CartClear(generic.DetailView):
     http_method_names = ['post']
 
     def post(self, request, *args, **kwargs):
-        self.request.cart.items = []
+        self.request.cart.items.clear()
 
         messages.success(self.request, '購物車已清空')
         return redirect('cart_detail')
@@ -133,9 +136,17 @@ class ProductAddToCart(generic.DetailView):
 
     def post(self, request, *args, **kwargs):
         self.object = self.get_object()
-        self.request.cart.items.add(self.object)
-
-        messages.success(self.request, '已加入購物車')
+        # self.request.cart.items.add(self.object)
+        quantity = request.POST.get('quantity')
+        if quantity:
+            cart_item, created = CartItem.objects.get_or_create(
+                cart=self.request.cart, product=self.object
+            )
+            cart_item.quantity += int(quantity)
+            cart_item.save()
+            messages.success(self.request, '已加入購物車')
+        else:
+            messages.error(self.request, '請輸入購買數量')
         return redirect('product_detail', pk=self.object.id)
 
 
@@ -145,8 +156,11 @@ class ProductDelToCart(generic.DetailView):
 
     def post(self, request, *args, **kwargs):
         self.object = self.get_object()
-        self.request.cart.items.remove(self.object)
-
+        # self.request.cart.items.remove(self.object)
+        cart_item = CartItem.objects.get(
+            cart=self.request.cart, product=self.object
+        )
+        cart_item.delete()
         messages.success(self.request, '已從購物車移除「{}」'.format(self.object.title))
         return redirect('cart_detail')
 
