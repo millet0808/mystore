@@ -5,6 +5,10 @@
     <div class="row">
         <div class="col-md-12">
             <h2> 購物車 </h2>
+            <form method="post" action="{% url 'cart_clear' %}" class="pull-right">
+                {% csrf_token %}
+                {% bootstrap_button '清空購物車' button_type='submit' button_class='btn-lg btn-default' %}
+            </form>
             <table class="table table-bordered">
                 <thead>
                 <tr>

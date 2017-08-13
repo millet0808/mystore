@@ -83,6 +83,16 @@ class OrderCreateCartCheckout(LoginRequiredMixin, generic.CreateView):
         return reverse('order_detail', kwargs={'token': self.object.token})
 
 
+class CartClear(generic.DetailView):
+    http_method_names = ['post']
+
+    def post(self, request, *args, **kwargs):
+        self.request.cart.items = []
+
+        messages.success(self.request, '購物車已清空')
+        return redirect('cart_detail')
+
+
 class ProductList(PermissionRequiredMixin, generic.ListView):
     model = Product
 
