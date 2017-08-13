@@ -29,6 +29,13 @@ class OrderDetailMixin(object):
 class OrderList(PermissionRequiredMixin, generic.ListView):
     model = Order
 
+    def get_queryset(self):
+        if self.permission_required == 'estore.change_order':
+            order_list = Order.objects.all()
+        else:
+            order_list = self.request.user.order_set.all()
+        return order_list
+
     def has_permission(self):
         if self.permission_required:
             return super(OrderList, self).has_permission()
