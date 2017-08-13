@@ -12,7 +12,7 @@
         </div>
         <div class="col-md-6">
             <h2> {{ object.tilte }} </h2>
-            <div style="height:100px;">
+            <div>
                 <p>
                     {{ object.description }}
                 </p>
@@ -21,7 +21,7 @@
             <div class="product-price"> $ {{ object.price }} </div>
             <div class="pull-right">
                 <form method="post" action="{% url 'product_addtocart' object.id %}">
-                    <input type="number" name="quantity" min=1 value="1">
+                    <input type="number" name="quantity" min=1 placeholder="購買數量">
                     {% csrf_token %}
                     {% bootstrap_button '加入購物車' button_type='submit' button_class='btn-primary btn-lg btn-danger' %}
                 </form>

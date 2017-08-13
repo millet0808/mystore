@@ -137,19 +137,26 @@ class ProductAddToCart(generic.DetailView):
     def post(self, request, *args, **kwargs):
         self.object = self.get_object()
         # self.request.cart.items.add(self.object)
-        quantity = request.POST.get('quantity')
+        try:
+            quantity = int(request.POST.get('quantity', 0))
+        except:
+            quantity = 0
         if quantity:
-            cart_item, created = CartItem.objects.get_or_create(
-                cart=self.request.cart, product=self.object
-            )
-            if created:
-                cart_item.quantity = int(quantity)
+            inventory_qty = self.object.quantity
+            if quantity > inventory_qty:
+                messages.error(self.request, '庫存量剩餘{}'.format(inventory_qty))
             else:
-                cart_item.quantity += int(quantity)
-            cart_item.save()
-            messages.success(self.request, '已加入購物車')
+                cart_item, created = CartItem.objects.get_or_create(
+                    cart=self.request.cart, product=self.object
+                )
+                if created:
+                    cart_item.quantity = quantity
+                else:
+                    cart_item.quantity += quantity
+                cart_item.save()
+                messages.success(self.request, '已加入購物車')
         else:
-            messages.error(self.request, '請輸入購買數量')
+            messages.error(self.request, '請輸入購買數量，且數量需>=1')
         return redirect('product_detail', pk=self.object.id)
 
 
