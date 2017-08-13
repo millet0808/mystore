@@ -23,8 +23,9 @@ class Cart(models.Model):
 
     def total_price(self):
         sum = 0
-        for product in self.items.all():
-            sum += product.price
+        cart_items = CartItem.objects.filter(cart=self)
+        for cart_item in cart_items.all():
+            sum += cart_item.quantity * cart_item.product.price
         return sum
 
 

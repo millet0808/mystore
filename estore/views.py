@@ -142,7 +142,10 @@ class ProductAddToCart(generic.DetailView):
             cart_item, created = CartItem.objects.get_or_create(
                 cart=self.request.cart, product=self.object
             )
-            cart_item.quantity += int(quantity)
+            if created:
+                cart_item.quantity = int(quantity)
+            else:
+                cart_item.quantity += int(quantity)
             cart_item.save()
             messages.success(self.request, '已加入購物車')
         else:
