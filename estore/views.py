@@ -55,13 +55,14 @@ class OrderCreateCartCheckout(LoginRequiredMixin, generic.CreateView):
         self.object.info = form_orderinfo
         self.object.save()
 
-        for each_item in self.request.cart.items.all():
+        cart_items = CartItem.objects.filter(cart=self.request.cart)
+        for each_item in cart_items.all():
+            product = each_item.product
             self.object.orderitem_set.create(
-                title=each_item.title,
-                price=each_item.price,
-                quantity=1,
+                title=product.title,
+                price=product.price,
+                quantity=each_item.quantity,
             )
-
         return HttpResponseRedirect(self.get_success_url())
 
     def form_invalid(self, form, **kwargs):
@@ -82,6 +83,7 @@ class OrderCreateCartCheckout(LoginRequiredMixin, generic.CreateView):
             return self.form_invalid(form, form_orderinfo=form_orderinfo)
 
     def get_success_url(self):
+        self.request.cart.items.clear()
         messages.success(self.request, '訂單已生成')
         return reverse('order_detail', kwargs={'token': self.object.token})
 
