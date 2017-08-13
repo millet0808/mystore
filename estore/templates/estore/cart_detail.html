@@ -14,6 +14,7 @@
                 <tr>
                     <th colspan="2">商品資訊</th>
                     <th>單價</th>
+                    <th></th>
                 </tr>
                 </thead>
                 <tbody>
@@ -35,6 +36,12 @@
                         </td>
                         <td>
                             {{ product.price }}
+                        </td>
+                        <td>
+                            <form method="post" action="{% url 'product_deltocart' product.id %}">
+                                {% csrf_token %}
+                                {% bootstrap_button '刪除' button_type='submit' button_class='btn-lg btn-danger' %}
+                            </form>
                         </td>
                     </tr>
                 {% endfor %}

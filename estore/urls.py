@@ -7,6 +7,7 @@ urlpatterns = [
     url(r'^$', views.ProductList.as_view(), name='product_list'),
     url(r'^(?P<pk>\d+)/$', views.ProductDetail.as_view(), name='product_detail'),
     url(r'^(?P<pk>\d+)/addtocart$', views.ProductAddToCart.as_view(), name='product_addtocart'),
+    url(r'^(?P<pk>\d+)/deltocart$', views.ProductDelToCart.as_view(), name='product_deltocart'),
 
     url(r'^cart/$', views.CartDetailFromRequest.as_view(), name='cart_detail'),
     url(r'^cart/checkout$', views.OrderCreateCartCheckout.as_view(), name='cart_checkout'),

@@ -139,6 +139,18 @@ class ProductAddToCart(generic.DetailView):
         return redirect('product_detail', pk=self.object.id)
 
 
+class ProductDelToCart(generic.DetailView):
+    model = Product
+    http_method_names = ['post']
+
+    def post(self, request, *args, **kwargs):
+        self.object = self.get_object()
+        self.request.cart.items.remove(self.object)
+
+        messages.success(self.request, '已從購物車移除「{}」'.format(self.object.title))
+        return redirect('cart_detail')
+
+
 class UserList(PermissionRequiredMixin, generic.ListView):
     permission_required = 'auth.change_user'
     model = User
