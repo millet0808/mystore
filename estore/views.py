@@ -9,18 +9,38 @@ from django.urls import reverse
 from django.views import generic
 
 from .forms import OrderInfoForm
-from .models import Order, Product
+from .models import Order, Product, CartItem
 
 
 # Create your views here.
-class CartDetailFromRequest(generic.DetailView):
-    def get_object(self):
-        return self.request.cart
+class CartDetailFromRequest(generic.ListView):
+    template_name = 'estore/cart_detail.html'
+
+    def get_queryset(self):
+        cart_items = CartItem.objects.filter(cart=self.request.cart)
+        return cart_items
 
 
 class OrderDetailMixin(object):
     def get_object(self):
         return get_object_or_404(self.request.user.order_set, token=uuid.UUID(self.kwargs.get('token')))
+
+
+class OrderList(PermissionRequiredMixin, generic.ListView):
+    model = Order
+
+    def get_queryset(self):
+        if self.permission_required == 'estore.change_order':
+            order_list = Order.objects.all()
+        else:
+            order_list = self.request.user.order_set.all()
+        return order_list
+
+    def has_permission(self):
+        if self.permission_required:
+            return super(OrderList, self).has_permission()
+        else:
+            return True
 
 
 class OrderDetail(OrderDetailMixin, LoginRequiredMixin, generic.DetailView):
@@ -36,7 +56,7 @@ class OrderPayWithCreditCard(OrderDetailMixin, LoginRequiredMixin, generic.Detai
         self.object.make_payment()
         self.object.save()
 
-        return redirect('order_detail', token=self.object.token)
+        return redirect('order_list')
 
 
 class OrderCreateCartCheckout(LoginRequiredMixin, generic.CreateView):
@@ -52,13 +72,14 @@ class OrderCreateCartCheckout(LoginRequiredMixin, generic.CreateView):
         self.object.info = form_orderinfo
         self.object.save()
 
-        for each_item in self.request.cart.items.all():
+        cart_items = CartItem.objects.filter(cart=self.request.cart)
+        for each_item in cart_items.all():
+            product = each_item.product
             self.object.orderitem_set.create(
-                title=each_item.title,
-                price=each_item.price,
-                quantity=1,
+                title=product.title,
+                price=product.price,
+                quantity=each_item.quantity,
             )
-
         return HttpResponseRedirect(self.get_success_url())
 
     def form_invalid(self, form, **kwargs):
@@ -79,8 +100,19 @@ class OrderCreateCartCheckout(LoginRequiredMixin, generic.CreateView):
             return self.form_invalid(form, form_orderinfo=form_orderinfo)
 
     def get_success_url(self):
+        self.request.cart.items.clear()
         messages.success(self.request, '訂單已生成')
         return reverse('order_detail', kwargs={'token': self.object.token})
+
+
+class CartClear(generic.DetailView):
+    http_method_names = ['post']
+
+    def post(self, request, *args, **kwargs):
+        self.request.cart.items.clear()
+
+        messages.success(self.request, '購物車已清空')
+        return redirect('cart_detail')
 
 
 class ProductList(PermissionRequiredMixin, generic.ListView):
@@ -123,10 +155,43 @@ class ProductAddToCart(generic.DetailView):
 
     def post(self, request, *args, **kwargs):
         self.object = self.get_object()
-        self.request.cart.items.add(self.object)
-
-        messages.success(self.request, '已加入購物車')
+        # self.request.cart.items.add(self.object)
+        try:
+            quantity = int(request.POST.get('quantity', 0))
+        except:
+            quantity = 0
+        if quantity:
+            inventory_qty = self.object.quantity
+            if quantity > inventory_qty:
+                messages.error(self.request, '庫存量剩餘{}'.format(inventory_qty))
+            else:
+                cart_item, created = CartItem.objects.get_or_create(
+                    cart=self.request.cart, product=self.object
+                )
+                if created:
+                    cart_item.quantity = quantity
+                else:
+                    cart_item.quantity += quantity
+                cart_item.save()
+                messages.success(self.request, '已加入購物車')
+        else:
+            messages.error(self.request, '請輸入購買數量，且數量需>=1')
         return redirect('product_detail', pk=self.object.id)
+
+
+class ProductDelToCart(generic.DetailView):
+    model = Product
+    http_method_names = ['post']
+
+    def post(self, request, *args, **kwargs):
+        self.object = self.get_object()
+        # self.request.cart.items.remove(self.object)
+        cart_item = CartItem.objects.get(
+            cart=self.request.cart, product=self.object
+        )
+        cart_item.delete()
+        messages.success(self.request, '已從購物車移除「{}」'.format(self.object.title))
+        return redirect('cart_detail')
 
 
 class UserList(PermissionRequiredMixin, generic.ListView):

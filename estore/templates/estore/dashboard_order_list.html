@@ -1,0 +1,61 @@
+{% extends 'estore/dashboard_base.html' %}
+{% load bootstrap3 %}
+
+{% block content %}
+    <h2> 訂單列表 </h2>
+    <table class="table table-bordered">
+        <thead>
+        <tr>
+            <th>#</th>
+            <th>購買者</th>
+            <th>總額</th>
+            <th>付款狀態</th>
+            <th>付款方式</th>
+            <th>訂單狀態</th>
+            <th width="100"> 選項</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for order in object_list %}
+            <tr>
+                <td>{{ order.info_id }}</td>
+                <td>{{ order.user.username }}</td>
+                <td>{{ order.total }}</td>
+                <td>
+                    {% if not order.is_paid %}
+                        <span class="label label-danger">未付款</span>
+                    {% else %}
+                        <span class="label label-success">已付款</span>
+                    {% endif %}
+                </td>
+                <td>
+                    {% if order.payment_method == 'credit_card' %}
+                        <span class="label label-default">信用卡</span>
+                    {% elif order.payment_method == 'amt' %}
+                        <span class="label label-default">ATM</span>
+                    {% endif %}
+                </td>
+                <td>
+                    {% if order.state == 'order_placed' %}
+                        <span class="label label-info">等待付款</span>
+                    {% elif order.state == 'paid' %}
+                        <span class="label label-info">已付款</span>
+                    {% elif order.state == 'shipping' %}
+                        <span class="label label-info">運送中</span>
+                    {% elif order.state == 'shipped' %}
+                        <span class="label label-info">已寄達</span>
+                    {% elif order.state == 'good_returned' %}
+                        <span class="label label-info">退貨</span>
+                    {% elif order.state == 'order_cancelled' %}
+                        <span class="label label-info">訂單取消</span>
+                    {% endif %}
+                </td>
+                <td>
+                    {% url 'order_detail' order.token as order_detail_url %}
+                    {% bootstrap_button '檢視' button_class='btn-sm btn-default' href=order_detail_url %}
+                </td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+{% endblock %}

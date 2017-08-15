@@ -19,13 +19,23 @@ class Product(models.Model):
 
 
 class Cart(models.Model):
-    items = models.ManyToManyField(Product)
+    items = models.ManyToManyField(Product, through='CartItem')
 
     def total_price(self):
         sum = 0
-        for product in self.items.all():
-            sum += product.price
+        cart_items = CartItem.objects.filter(cart=self)
+        for cart_item in cart_items.all():
+            sum += cart_item.quantity * cart_item.product.price
         return sum
+
+
+class CartItem(models.Model):
+    product = models.ForeignKey(Product, on_delete=models.CASCADE)
+    cart = models.ForeignKey(Cart, on_delete=models.CASCADE)
+    quantity = models.PositiveIntegerField(default=1, verbose_name='購買數量')
+
+    class Meta:
+        unique_together = ('product', 'cart')
 
 
 class OrderInfo(models.Model):
