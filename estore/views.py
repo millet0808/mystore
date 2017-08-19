@@ -30,6 +30,22 @@ class CartDelete(CartDetailMixin, generic.DeleteView):
     def get(self, request, *args, **kwargs):
         return redirect('cart_detail')
 
+
+class CartItemDelete(generic.DeleteView):
+    def delete(self, request, *args, **kwargs):
+        self.object = self.get_object()
+        success_url = self.get_success_url()
+        self.request.cart.items.remove(self.object)
+        return HttpResponseRedirect(success_url)
+
+    def get_object(self, queryset=None):
+        return self.request.cart.items.get(id=self.kwargs.get('pk'))
+
+    def get_success_url(self):
+        messages.warning(self.request, '成功將 {} 從購物車刪除!'.format(self.object.title))
+        return reverse('cart_detail')
+
+
 class OrderDetailMixin(object):
     def get_object(self):
         return get_object_or_404(self.request.user.order_set, token=uuid.UUID(self.kwargs.get('token')))
